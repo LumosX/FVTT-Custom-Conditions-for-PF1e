@@ -1,0 +1,60 @@
+{
+  "id": "lumos-custom-conditions-for-pf1e",
+  "title": "Lumos's Custom Conditions for PF1e",
+  "description": "<p>Add buffs to tokens you don't own.</p>",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "Lumos",
+      "url": "zerovector.eu",
+      "flags": {}
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "esmodules": [
+    "dist/lumos-custom-conditions-for-pf1e.js"
+  ],
+  "styles": [
+    {
+      "src": "dist/lumos-custom-conditions-for-pf1e.css"
+    }
+  ],
+  "flags": {
+    "hotReload": {
+      "extensions": [
+        "json"
+      ],
+      "paths": [
+        "lang"
+      ]
+    }
+  },
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json",
+      "flags": {}
+    }
+  ],
+  "socket": true,
+  "relationships": {
+    "systems": [
+      {
+        "id": "pf1",
+        "type": "system",
+        "compatibility": {}
+      }
+    ],
+    "requires": [
+      {
+        "id": "socketlib",
+        "type": "module",
+        "compatibility": {}
+      }
+    ]
+  }
+}
