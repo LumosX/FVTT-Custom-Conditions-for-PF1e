@@ -3,6 +3,7 @@
   "title": "Lumos's Custom Conditions for PF1e",
   "description": "<p>Add buffs to tokens you don't own.</p>",
   "version": "0.1.0",
+  "download": "https://github.com/LumosX/FVTT-Custom-Conditions-for-PF1e/releases/download/v0.1.0-alpha/module.zip",
   "authors": [
     {
       "name": "Lumos",
