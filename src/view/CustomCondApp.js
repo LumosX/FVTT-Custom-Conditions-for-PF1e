@@ -18,12 +18,15 @@ export class CustomCondApp extends SvelteApp
          width: 400,
          height: 'auto',
          resizable: true,
-         classes: ["app", "window-app", "dialog", "pf1", "theme-light"],
+         classes: ["application", "app", "window-app", "dialog", "pf1", "themed", "theme-light"],
          headerButtonNoClose: true,
          headerButtonNoLabel: false,
          svelte: {
             class: CustomCondDialog,
-            target: document.body
+            target: document.body,
+            props: function() {
+               return { application: this };
+            }
          }
       });
    }

@@ -15,19 +15,19 @@
     }
 
     function handleKeydown(event, action) {
-       if (event.key === 'Enter' || event.key === ' ') {
-           event.preventDefault();
-           action();
-       }
-   }
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            action();
+        }
+    }
 </script>
 
 <div class="custom-select">
     <div class="select-selected"
-         role="button"
-         tabindex="0"
-         on:click={() => isDropdownOpen.update(v => !v)}
-         on:keydown={(e) => handleKeydown(e, () => isDropdownOpen.update(v => !v))}>
+        role="button"
+        tabindex="0"
+        on:click={() => isDropdownOpen.update(v => !v)}
+        on:keydown={(e) => handleKeydown(e, () => isDropdownOpen.update(v => !v))}>
         {#if selectedItem}
             <slot name="selected" item={selectedItem}>
                 <span>{selectedItem.name}</span>
@@ -40,11 +40,11 @@
         <div class="select-items" role="listbox">
             {#each items as item (item.id)}
                 <div class="custom-option"
-                     role="option"
-                     tabindex="0"
-                     aria-selected={selectedItem?.id === item.id}
-                     on:click={() => selectItem(item)}
-                     on:keydown={(e) => handleKeydown(e, () => selectItem(item))}>
+                    role="option"
+                    tabindex="0"
+                    aria-selected={selectedItem?.id === item.id}
+                    on:click={() => selectItem(item)}
+                    on:keydown={(e) => handleKeydown(e, () => selectItem(item))}>
                     <slot name="option" item={item}>
                         <span>{item.name}</span>
                     </slot>
@@ -105,7 +105,6 @@
         background-color: var(--pf1-item-list-hover-bg);
         color: var(--pf1-item-list-hover-text);
     }
-    /* Can't be scoped to this component if we want to style the image from the parent */
     :global(.option-icon) {
         width: 26px;
         height: 26px;
