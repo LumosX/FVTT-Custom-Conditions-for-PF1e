@@ -10,7 +10,8 @@ export function InitCustomCondManager(socketInstance) {
     // Patch system functions
     Hooks.on("pf1PostReady", () => onPF1PostReady_ApplyMonkeyPatches());
 
-    Hooks.on("renderChatMessageHTML", (message, html) => onRenderCustomCondChatMessage_AddOnClickTokenPanning(message, html));
+    Hooks.on("renderChatMessageHTML", (...args) => onRenderCustomCondChatMessage_AddOnClickTokenPanning(...args));
+    Hooks.on("pf1ToggleActorBuff", (...args) => onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(...args));
 
     game.customConditions = game.customConditions || {};
 
@@ -70,7 +71,7 @@ async function onCreateActiveEffect_HandleInitiativeEndDurations(newEffect, opti
 
 async function onRenderCustomCondChatMessage_AddOnClickTokenPanning(message, html) {
     // Add click event listener to links printed in customCond messages
-    if (!message.flags["CustomCondMessage"]?.id)
+    if (!message.flags?.customConditionsMessage)
         return;
 
     html.querySelectorAll('.focus-token').forEach(link => {
@@ -85,6 +86,24 @@ async function onRenderCustomCondChatMessage_AddOnClickTokenPanning(message, htm
     });
 }
 
+async function onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(actor, item, state) {
+    if (!item.flags.lumos?.customConditionBuff || state) // on disable
+        return;
+
+    const activeEffect = item.effects.find(x => x.name == item.name);
+    if (activeEffect) {
+        await item.updateEmbeddedDocuments("ActiveEffect", [{_id: activeEffect._id}], {disabled: true, render: 0});
+    }
+
+    try {
+        await actor.deleteEmbeddedDocuments("Item", [{_id: item._id}]);
+    }
+    catch {
+        // Intentionally empty. Using the proper embedded document removal above produces an
+        // "undefined id [[object Object]] does not exist in the EmbeddedCollection collection." error. This used to work in foundry v11.
+        // However, it does delete the embedded document, so...
+    }
+}
 
 function getInitiativeForInitEndEffect() {
     return game.combat.turns[game.combat.turn].initiative - 0.001;
@@ -197,9 +216,9 @@ function createCustomConditionItem(cond, newIdentifier, setDuration) {
         cond.system.tags.push(itemTag);
 
     // If it doesn't include a "custom condition", add one; this causes the little label to pop up
+    // TODO: BROKEN IN FOUNDRY V13/PF1e 11.8? the little label doesn't show up when a custom buff is removed 
     if (!cond.system.conditions.includes(cond.name))
         cond.system.conditions.push(cond.name);
-    console.log("testing testing", cond);
 
     // Duration override
     if (setDuration.active && setDuration.value > 0) {
@@ -215,26 +234,14 @@ function createCustomConditionItem(cond, newIdentifier, setDuration) {
             : setDuration.end;
     }
 
+    cond.flags = cond.flags || {};
+    cond.flags.lumos = { "customConditionBuff": true };
+
     // Add data flag for the special initiative adjustment for the embedded active effect
     if (game.combat && setDuration.active && setDuration.end === "initiativeEnd") {
-        cond.flags = cond.flags || {};
         cond.flags.lumos = { "initiativeEnd": getInitiativeForInitEndEffect() };
     }
-
-
-    const autoDelCallName = itemPrefix + "Autodelete";
-    if (!cond.system.scriptCalls) cond.system.scriptCalls = [];
-    if (!cond.system.scriptCalls.find(x => x.name === autoDelCallName)) {
-        cond.system.scriptCalls.push({
-            "_id": autoDelCallName,
-            "name": autoDelCallName,
-            "img": "icons/svg/dice-target.svg",
-            "type": "script",
-            "value": "if (!state && actor.items.get(item.id)) actor.deleteEmbeddedDocuments(\"Item\", [ item.id ])",
-            "category": "toggle",
-            "hidden": true
-        });
-    }
+    
     return cond;
 }
 
@@ -387,13 +394,12 @@ async function renderChatMessage(userId, condName, condIcon, isStatus, eventWasC
             ? { actor: targetUser.character.id, alias: targetUser.character.name }
             : { user: userId, alias: targetUser.name };
 
-    const messageId = foundry.utils.randomID();
     let chatMessage = ChatMessage.create({ // this is a promise
         user: userId,
         speaker: speaker,
         content: chatMessageContent,
         style: CONST.CHAT_MESSAGE_STYLES.OTHER,
-        flags: { "CustomCondMessage": {id: messageId} }
+        flags: { customConditionsMessage: true }
     });
     await chatMessage;
 }
