@@ -18,7 +18,8 @@
     "ui": "readonly",
     "pf1": "readonly",
     "CONFIG": "readonly",
-    "socketlib": "readonly"
+    "socketlib": "readonly",
+    "ChatMessage": "readonly"
   },
 
   // Defines / overrides a few more environment parameters not provided in the configs above.

@@ -6,8 +6,11 @@ export function InitCustomCondManager(socketInstance) {
 
     // Perform pre-init
     preInit_CleanExistingHooks();
+
     // Patch system functions
     Hooks.on("pf1PostReady", () => onPF1PostReady_ApplyMonkeyPatches());
+
+    Hooks.on("renderChatMessageHTML", (message, html) => onRenderCustomCondChatMessage_AddOnClickTokenPanning(message, html));
 
     game.customConditions = game.customConditions || {};
 
@@ -65,6 +68,24 @@ async function onCreateActiveEffect_HandleInitiativeEndDurations(newEffect, opti
     newEffect.update(getEffectUpdatesForInitEndEffect(initEndEffectTargetInit));
 }
 
+async function onRenderCustomCondChatMessage_AddOnClickTokenPanning(message, html) {
+    // Add click event listener to links printed in customCond messages
+    if (!message.flags["CustomCondMessage"]?.id)
+        return;
+
+    html.querySelectorAll('.focus-token').forEach(link => {
+        link.addEventListener('click', event => {
+            event.preventDefault();
+            const tokenId = event.currentTarget.dataset.tokenId;
+            const token = canvas.tokens.get(tokenId);
+            if (token) {
+                canvas.animatePan({ x: token.x, y: token.y });
+            }
+        });
+    });
+}
+
+
 function getInitiativeForInitEndEffect() {
     return game.combat.turns[game.combat.turn].initiative - 0.001;
 }
@@ -106,7 +127,7 @@ async function applyCustomCondition(userId, parameters, targets) {
             const updates = {}
             if (increaseLevel.active) {
                 updates["system.level"] = parseInt(actorCond.system.level, 10) + increaseLevel.value;
-            }í
+            }
             if (setDuration.active) {
                 updates["system.duration"] = newCondToAdd.system.duration;
 
@@ -371,23 +392,8 @@ async function renderChatMessage(userId, condName, condIcon, isStatus, eventWasC
         user: userId,
         speaker: speaker,
         content: chatMessageContent,
-        type: CONST.CHAT_MESSAGE_TYPES.OTHER,
-        flags: { "CustomCondMessage": messageId }
-    });
-    // Add click event listener to the links
-    Hooks.once('renderChatMessage', (message, [html]) => {
-        if (message.flags["CustomCondMessage"] == messageId) {
-            html.querySelectorAll('.focus-token').forEach(link => {
-                link.addEventListener('click', (event) => {
-                    event.preventDefault();
-                    const tokenId = event.currentTarget.dataset.tokenId;
-                    const token = canvas.tokens.get(tokenId);
-                    if (token) {
-                        canvas.animatePan({ x: token.x, y: token.y });
-                    }
-                });
-            });
-        }
+        style: CONST.CHAT_MESSAGE_STYLES.OTHER,
+        flags: { "CustomCondMessage": {id: messageId} }
     });
     await chatMessage;
 }

@@ -103,7 +103,7 @@
         );
     });
 
-    selectedCondition.subscribe(async (cond) => {
+    selectedCondition.subscribe(async cond => {
         if (!cond) return;
 
         if (cond.isStatus) {
@@ -135,12 +135,12 @@
 
             let durationUnits = condItem.system.duration.units;
             if (!["round", "minute", "hour"].includes(durationUnits)) durationUnits = "round";
-            setDuration.update((s) => ({ ...s, units: durationUnits }));
+            setDuration.update(s => ({ ...s, units: durationUnits }));
 
             let durationEndTiming = condItem.system.duration.end;
             if (!["turnStart", "turnEnd", "initiative", "initiativeEnd"].includes(durationEndTiming))
                 durationEndTiming = "turnStart";
-            setDuration.update((s) => ({ ...s, end: durationEndTiming }));
+            setDuration.update(s => ({ ...s, end: durationEndTiming }));
         }
     });
 
@@ -204,7 +204,11 @@
     const allItems = writable([]);
     filteredConditions.subscribe(fc => {
         statuses.subscribe(s => {
-            const mappedConditions = fc.map(c => ({ ...c.toObject(), isStatus: false }));
+            const mappedConditions = fc.map(c => ({
+                ...c.toObject(),
+                id: c._id,
+                isStatus: false,
+            }));
             const mappedStatuses = s.map(status => ({
                 id: status._id,
                 name: status.name,
@@ -223,7 +227,7 @@
             <CustomDropdown
                 items={$allItems}
                 selectedItem={$selectedCondition}
-                on:select={(e) => selectCondition(e.detail)}
+                on:select={e => selectCondition(e.detail)}
                 placeholder="Select a condition"
             >
                 <div slot="selected" let:item class="custom-option">
