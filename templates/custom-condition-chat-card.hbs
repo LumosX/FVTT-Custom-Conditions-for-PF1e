@@ -1,0 +1,17 @@
+<div class="pf1 chat-card">
+    <header class="card-header type-color flexrow">
+        <img src="{{condIcon}}" title="{{condName}}" width="36" height="36" style="border: 0;{{#if isStatus}}{{#if (eq condName "Battered")}}mix-blend-mode: multiply;{{/if}}filter: invert(1){{/if}}">
+        <h3 class="item-name">{{condName}}</h3>
+    </header>
+    {{#each sections}}
+        <div class="card-content">
+            <h4>{{this.stateSectionText}}</h4>
+            {{#each this.tokens}}
+                <div style="display: inline-flex; align-items: center; margin-right: 5px">
+                    <img src="{{this.document.texture.src}}" width="36" height="36" style="border: none; margin-right: 5px;">
+                    <a class="focus-token content-link" data-token-id="{{this.id}}">{{this.name}}</a>
+                </div>
+            {{/each}}
+        </div>
+    {{/each}}
+</div>
