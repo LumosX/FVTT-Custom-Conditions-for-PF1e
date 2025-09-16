@@ -1,12 +1,12 @@
 <script>
-    export let id = '';
-    export let label = '';
+    export let id = "";
+    export let label = "";
     export let tooltipText = null;
     export let checked = false;
-    export let value = '';
-    export let placeholder = '';
+    export let value = "";
+    export let placeholder = "";
     export let hasTextbox = false;
-    export let textboxClass = 'inline-textbox';
+    export let textboxClass = "inline-textbox";
     export let disabled = false;
 </script>
 

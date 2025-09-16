@@ -7,9 +7,6 @@ export function InitCustomCondManager(socketInstance) {
     // Perform pre-init
     preInit_CleanExistingHooks();
 
-    // Patch system functions
-    Hooks.on("pf1PostReady", () => onPF1PostReady_ApplyMonkeyPatches());
-
     Hooks.on("renderChatMessageHTML", (...args) => onRenderCustomCondChatMessage_AddOnClickTokenPanning(...args));
     Hooks.on("pf1ToggleActorBuff", (...args) => onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(...args));
 
@@ -52,13 +49,6 @@ function preInit_CleanExistingHooks() {
         Hooks.off("createActiveEffect", game.customConditions.hook)
 }
 
-function onPF1PostReady_ApplyMonkeyPatches() {
-    // Patch the pf1e effect expiry function. It's busted, and fails to track "initiative"-ended events properly.
-    // WAIT THIS MAY NOT BE NECESSARY ANYMORE
-    // pf1.documents.actor.ActorPF.prototype.expireActiveEffects = patchedFunc_ExpireActiveEffects;
-    // console.log("Lumos's Custom Condition Manager | Function patch applied.")
-}
-
 async function onCreateActiveEffect_HandleInitiativeEndDurations(newEffect, options, userId) {
     if (userId !== game.user.id) return;
 
@@ -74,8 +64,8 @@ async function onRenderCustomCondChatMessage_AddOnClickTokenPanning(message, htm
     if (!message.flags?.customConditionsMessage)
         return;
 
-    html.querySelectorAll('.focus-token').forEach(link => {
-        link.addEventListener('click', event => {
+    html.querySelectorAll(".focus-token").forEach(link => {
+        link.addEventListener("click", event => {
             event.preventDefault();
             const tokenId = event.currentTarget.dataset.tokenId;
             const token = canvas.tokens.get(tokenId);
@@ -145,7 +135,7 @@ async function applyCustomCondition(userId, parameters, targets) {
                     updates["flags.lumos.initiativeEnd"] = targetInit;
 
                 const effectUpdates = {
-                    "duration": createStatusEffectDuration(setDuration),
+                    duration: createStatusEffectDuration(setDuration),
                     ...(updateInitEnd && getEffectUpdatesForInitEndEffect(targetInit))
                 };
                 actorCond.effect.update(effectUpdates);
@@ -223,7 +213,7 @@ function createCustomConditionItem(cond, newIdentifier, setDuration) {
     }
 
     cond.flags = cond.flags || {};
-    cond.flags.lumos = { "customConditionBuff": true };
+    cond.flags.lumos = { customConditionBuff: true };
 
     // Add data flag for the special initiative adjustment for the embedded active effect
     if (game.combat && setDuration.active && setDuration.end === "initiativeEnd") {
@@ -251,7 +241,7 @@ async function applyStatusEffect(userId, parameters, targets) {
             const updateInitEnd = game.combat && setDuration.end === "initiativeEnd";
             const targetInit = effect.flags.lumos?.initiativeEnd;
             actorEffect.update({
-                "duration": effect.duration,
+                duration: effect.duration,
                 ...(updateInitEnd && getEffectUpdatesForInitEndEffect(targetInit)),
                 ...(updateInitEnd && { "flags.lumos.initiativeEnd": targetInit })
             });
@@ -297,7 +287,7 @@ function createStatusEffect(name, icon, statusName, setDuration) {
 
         if (game.combat && setDuration.end === "initiativeEnd") {
             effect.duration.end = "initiative";
-            effect.flags.lumos = { "initiativeEnd": getInitiativeForInitEndEffect() };
+            effect.flags.lumos = { initiativeEnd: getInitiativeForInitEndEffect() };
         }
     }
     return effect;
@@ -307,14 +297,14 @@ function createStatusEffectDuration(setDuration) {
     console.log("status effect");
     const durationSecs = getTotalSecondsOfCustomDuration(setDuration);
     return {
-        "startTime": game.time.worldTime,
-        "duration": durationSecs,
-        "seconds": durationSecs,
-        "rounds": null,
-        "turns": null,
-        "startRound": game.combat ? game.combat.round : null,
-        "startTurn": game.combat ? game.combat.turn : null,
-        "type": "seconds",
+        startTime: game.time.worldTime,
+        duration: durationSecs,
+        seconds: durationSecs,
+        rounds: null,
+        turns: null,
+        startRound: game.combat ? game.combat.round : null,
+        startTurn: game.combat ? game.combat.turn : null,
+        type: "seconds",
     }
 }
 
@@ -346,7 +336,7 @@ async function renderChatMessage(userId, condName, condIcon, isStatus, eventWasC
     });
 
     const chatMessageContent = await foundry.applications.handlebars
-        .renderTemplate('modules/lumos-custom-conditions-for-pf1e/templates/custom-condition-chat-card.hbs', {
+        .renderTemplate("modules/lumos-custom-conditions-for-pf1e/templates/custom-condition-chat-card.hbs", {
             condName,
             condIcon,
             isStatus,
@@ -374,112 +364,6 @@ async function renderChatMessage(userId, condName, condIcon, isStatus, eventWasC
     });
     await chatMessage;
 }
-
-async function patchedFunc_ExpireActiveEffects(
-    { combat, timeOffset = 0, worldTime = null, event = null, initiative = null } = {},
-    context = {}
-    ) {
-        if (!this.isOwner) throw new Error("Must be owner");
-
-        // Canonical world time.
-        // Due to async code in numerous places and no awaiting of time updates, this can go out of sync of actual time.
-        worldTime ??= game.time.worldTime;
-        worldTime += timeOffset;
-
-        // Effects that have timed out
-        const expiredEffects = this._effectsWithDuration.filter((ae) => {
-            const { seconds, startTime } = ae.duration;
-            const { rounds, startRound } = ae.duration;
-
-            // Calculate remaining duration.
-            // AE.duration.remaining is updated by Foundry only in combat and is unreliable.
-            let remaining = Infinity;
-            // Convert rounds to seconds
-            if (Number.isFinite(seconds) && seconds >= 0) {
-                const elapsed = worldTime - (startTime ?? 0);
-                remaining = seconds - elapsed;
-            } else if (rounds > 0 && combat) {
-                // BUG: This will ignore which combat the round tracking started for
-                const elapsed = combat.round - (startRound ?? 0);
-                remaining = (rounds - elapsed) * CONFIG.time.roundTime;
-            }
-
-            // Time still remaining
-            if (remaining > 0) return false;
-
-            const flags = ae.getFlag("pf1", "duration") ?? {};
-
-            switch (flags.end || "turnStart") {
-                // Initiative based ending
-                case "initiative":
-                    if (initiative !== null) {
-                        return initiative <= flags.initiative;
-                    }
-                    // Anything not on initiative expires if they have negative time remaining
-                    ////////////////// PATCH BEGINS HERE
-                    //return remaining < 0;
-                    // Do not expire initiative-timed effects if the current event is not initiative-related.
-                    // Also note that "event" is null when this is called by CombatPF._processInitiative
-                    return false;
-                    ////////////////// PATCH ENDS HERE
-                // End on turn start, but we're not there yet
-                case "turnStart":
-                    if (remaining === 0 && !["turnStart", "turnEnd"].includes(event)) return false;
-                    break;
-                // End on turn end, but we're not quite there yet
-                case "turnEnd":
-                    if (remaining === 0 && event !== "turnEnd") return false;
-                    break;
-            }
-
-            // Otherwise end when time is out
-            return remaining <= 0;
-        });
-
-        const disableActiveEffects = [],
-            deleteActiveEffects = [],
-            disableBuffs = [];
-
-        for (const ae of expiredEffects) {
-            let item;
-            // Use AE parent when available
-            if (ae.parent instanceof Item) item = ae.parent;
-            // Otherwise support older origin cases
-            else item = ae.origin ? fromUuidSync(ae.origin, { relative: this }) : null;
-
-            if (item?.type === "buff") {
-                disableBuffs.push({ _id: item.id, "system.active": false });
-            } else {
-                if (ae.getFlag("pf1", "autoDelete")) {
-                    deleteActiveEffects.push(ae.id);
-                } else {
-                    disableActiveEffects.push({ _id: ae.id, disabled: true });
-                }
-            }
-        }
-
-        // Add context info for why this update happens to allow modules to understand the cause.
-        context.pf1 ??= {};
-        context.pf1.reason = "duration";
-
-        if (deleteActiveEffects.length) {
-            const deleteAEContext = foundry.utils.mergeObject(
-                { render: !disableBuffs.length && !disableActiveEffects.length },
-                context
-            );
-            await this.deleteEmbeddedDocuments("ActiveEffect", deleteActiveEffects, deleteAEContext);
-        }
-
-        if (disableActiveEffects.length) {
-            const disableAEContext = foundry.utils.mergeObject({ render: !disableBuffs.length }, context);
-            await this.updateEmbeddedDocuments("ActiveEffect", disableActiveEffects, disableAEContext);
-        }
-
-        if (disableBuffs.length) {
-            await this.updateEmbeddedDocuments("Item", disableBuffs, context);
-        }
-    }
-
 
 async function showMessageForUser(userId, message, state) {
     await socket.executeAsUser(showUIMessage, userId, message, state);

@@ -1,7 +1,7 @@
-import { CustomCondApp } from './view/CustomCondApp.js';
-import { InitCustomCondManager } from './custom-cond-manager.js';
+import { CustomCondApp } from "./view/CustomCondApp.js";
+import { InitCustomCondManager } from "./custom-cond-manager.js";
 
-Hooks.once('init', () => {
+Hooks.once("init", () => {
    // Other init-time setup can go here
 });
 
@@ -10,11 +10,11 @@ Hooks.once("socketlib.ready", () => {
    InitCustomCondManager(socket);
 });
 
-Hooks.on('getSceneControlButtons', (controls) => {
+Hooks.on("getSceneControlButtons", (controls) => {
    controls.tokens.tools.customConditions = {
-      name: 'customConditions',
-      title: 'Custom Conditions',
-      icon: 'fas fa-star',
+      name: "customConditions",
+      title: "Custom Conditions",
+      icon: "fas fa-star",
       onClick: () => {
          if (!game.customConditions?.app)
             game.customConditions.app = new CustomCondApp();

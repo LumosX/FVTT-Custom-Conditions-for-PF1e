@@ -1,7 +1,7 @@
-import { SvelteApp } from '#runtime/svelte/application';
-import { deepMerge } from '#runtime/util/object';
+import { SvelteApp } from "#runtime/svelte/application";
+import { deepMerge } from "#runtime/util/object";
 
-import CustomCondDialog from './CustomCondDialog.svelte';
+import CustomCondDialog from "./CustomCondDialog.svelte";
 
 export class CustomCondApp extends SvelteApp
 {
@@ -14,9 +14,9 @@ export class CustomCondApp extends SvelteApp
    static get defaultOptions()
    {
       return deepMerge(super.defaultOptions, {
-         title: 'Custom Conditions',
+         title: "Custom Conditions",
          width: 400,
-         height: 'auto',
+         height: "auto",
          resizable: true,
          classes: ["application", "app", "window-app", "dialog", "pf1", "themed", "theme-light"],
          headerButtonNoClose: true,

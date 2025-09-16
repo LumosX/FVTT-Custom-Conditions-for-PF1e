@@ -1,6 +1,6 @@
 <script>
-    import { createEventDispatcher } from 'svelte';
-    import { writable } from 'svelte/store';
+    import { createEventDispatcher } from "svelte";
+    import { writable } from "svelte/store";
 
     export let items = [];
     export let selectedItem = null;
@@ -10,12 +10,12 @@
     const isDropdownOpen = writable(false);
 
     function selectItem(item) {
-        dispatch('select', item);
+        dispatch("select", item);
         isDropdownOpen.set(false);
     }
 
     function handleKeydown(event, action) {
-        if (event.key === 'Enter' || event.key === ' ') {
+        if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             action();
         }
