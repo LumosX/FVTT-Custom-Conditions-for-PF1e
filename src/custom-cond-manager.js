@@ -90,19 +90,7 @@ async function onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(actor,
     if (!item.flags.lumos?.customConditionBuff || state) // on disable
         return;
 
-    const activeEffect = item.effects.find(x => x.name == item.name);
-    if (activeEffect) {
-        await item.updateEmbeddedDocuments("ActiveEffect", [{_id: activeEffect._id}], {disabled: true, render: 0});
-    }
-
-    try {
-        await actor.deleteEmbeddedDocuments("Item", [{_id: item._id}]);
-    }
-    catch {
-        // Intentionally empty. Using the proper embedded document removal above produces an
-        // "undefined id [[object Object]] does not exist in the EmbeddedCollection collection." error. This used to work in foundry v11.
-        // However, it does delete the embedded document, so...
-    }
+    await Item.implementation.deleteDocuments([item._id], {parent: actor});
 }
 
 function getInitiativeForInitEndEffect() {
@@ -239,7 +227,7 @@ function createCustomConditionItem(cond, newIdentifier, setDuration) {
 
     // Add data flag for the special initiative adjustment for the embedded active effect
     if (game.combat && setDuration.active && setDuration.end === "initiativeEnd") {
-        cond.flags.lumos = { "initiativeEnd": getInitiativeForInitEndEffect() };
+        cond.flags.lumos.initiativeEnd = getInitiativeForInitEndEffect();
     }
     
     return cond;
@@ -357,14 +345,15 @@ async function renderChatMessage(userId, condName, condIcon, isStatus, eventWasC
         tokenStateMap[state][1].push(token);
     });
 
-    const chatMessageContent = await renderTemplate('modules/lumos-custom-conditions-for-pf1e/templates/custom-condition-chat-card.hbs', {
-        condName,
-        condIcon,
-        isStatus,
-        sections: Object.values(tokenStateMap)
-            .map(([stateSectionText, tokens]) => ({ stateSectionText, tokens }))
-            .filter(section => section.tokens.length > 0)
-    });
+    const chatMessageContent = await foundry.applications.handlebars
+        .renderTemplate('modules/lumos-custom-conditions-for-pf1e/templates/custom-condition-chat-card.hbs', {
+            condName,
+            condIcon,
+            isStatus,
+            sections: Object.values(tokenStateMap)
+                .map(([stateSectionText, tokens]) => ({ stateSectionText, tokens }))
+                .filter(section => section.tokens.length > 0)
+        });
 
     const targetUser = game.users.get(userId);
     const userControlledToken = targetUser.character?.getActiveTokens()[0] ||
