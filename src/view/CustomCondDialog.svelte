@@ -231,11 +231,17 @@
                 placeholder="Select a condition"
             >
                 <div slot="selected" let:item class="custom-option">
-                    <img src={item.img} alt={item.name} class="option-icon" style={item.isStatus ? "filter: invert(1)" : ""}/>
+                    <img src={item.img} alt={item.name} 
+                        class="option-icon" 
+                        class:status-icon={item.isStatus}
+                        class:battered-icon={item.isStatus && item.name === 'Battered'}/>
                     <span>{item.name}</span>
                 </div>
                 <div slot="option" let:item class="custom-option">
-                    <img src={item.img} alt={item.name} class="option-icon" style={item.isStatus ? "filter: invert(1)" : ""}/>
+                    <img src={item.img} alt={item.name} 
+                        class="option-icon" 
+                        class:status-icon={item.isStatus}
+                        class:battered-icon={item.isStatus && item.name === 'Battered'}/>
                     <span>{item.name}</span>
                 </div>
             </CustomDropdown>
@@ -338,12 +344,10 @@
         margin-bottom: 5px;
     }
     .section-mini-title {
-    font-weight: bold;
-    margin-top: 5px;
-    margin-bottom: 5px;
+        font-weight: bold;
+        margin-top: 5px;
+        margin-bottom: 5px;
     }
-
-
     .form-group label {
         white-space: nowrap;
         overflow: hidden;
@@ -360,5 +364,11 @@
         display: flex;
         justify-content: flex-end;
         gap: 0.5em;
+    }
+    .status-icon {
+        filter: invert(1);
+    }
+    .battered-icon {
+        mix-blend-mode: multiply;
     }
 </style>

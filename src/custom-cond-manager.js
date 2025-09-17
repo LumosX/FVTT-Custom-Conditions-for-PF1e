@@ -80,7 +80,7 @@ async function onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(actor,
     if (!item.flags.lumos?.customConditionBuff || state) // on disable
         return;
 
-    await Item.implementation.deleteDocuments([item._id], {parent: actor});
+    await Item.implementation.deleteDocuments([item.id], {parent: actor});
 }
 
 function getInitiativeForInitEndEffect() {
