@@ -5,9 +5,9 @@ Hooks.once("init", () => {
    // Other init-time setup can go here
 });
 
-Hooks.once("socketlib.ready", () => {
+Hooks.once("socketlib.ready", async () => {
    const socket = socketlib.registerModule("lumos-custom-conditions-for-pf1e");
-   InitCustomCondManager(socket);
+   await InitCustomCondManager(socket);
 });
 
 Hooks.on("getSceneControlButtons", (controls) => {

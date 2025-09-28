@@ -1,11 +1,13 @@
 let socket;
 const showUIMessage = "showUIMessage";
 
-export function InitCustomCondManager(socketInstance) {
+export async function InitCustomCondManager(socketInstance) {
     socket = socketInstance;
 
     // Perform pre-init
     preInit_CleanExistingHooks();
+
+    await foundry.applications.handlebars.loadTemplates(["modules/lumos-custom-conditions-for-pf1e/templates/custom-condition-chat-card.hbs"]);
 
     Hooks.on("renderChatMessageHTML", (...args) => onRenderCustomCondChatMessage_AddOnClickTokenPanning(...args));
     Hooks.on("pf1ToggleActorBuff", (...args) => onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(...args));
@@ -17,7 +19,7 @@ export function InitCustomCondManager(socketInstance) {
         return async (...args) => {
             return await socket.executeAsGM(name, ...args);
         };
-    }
+    }   
 
     game.customConditions.apply = bindGMFunc("applyCond", apply);
     game.customConditions.remove = bindGMFunc("removeCond", remove);
@@ -77,10 +79,12 @@ async function onRenderCustomCondChatMessage_AddOnClickTokenPanning(message, htm
 }
 
 async function onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(actor, item, state) {
+    if (!game.user.isGM) return;
+
     if (!item.flags.lumos?.customConditionBuff || state) // on disable
         return;
 
-    setTimeout(async () => await actor.deleteEmbeddedDocuments("Item", [item.id]), 100);
+    setTimeout(async () => await actor.deleteEmbeddedDocuments("Item", [item.id]), 500);
 }
 
 function getInitiativeForInitEndEffect() {

@@ -5,7 +5,9 @@
     </header>
     {{#each sections}}
         <div class="card-content">
-            <h4>{{this.stateSectionText}}</h4>
+            <h3 style="font-weight: normal; margin: 0 0 0.5rem; border-bottom: 1px solid var(--color-whisper-border); font-size: var(--font-size-14)">
+                {{this.stateSectionText}}
+            </h4>
             {{#each this.tokens}}
                 <div style="display: inline-flex; align-items: center; margin-right: 5px">
                     <img src="{{this.document.texture.src}}" width="36" height="36" style="border: none; margin-right: 5px;">

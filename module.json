@@ -19,13 +19,8 @@
     "dist/lumos-custom-conditions-for-pf1e.js"
   ],
   "styles": [
-    {
-      "src": "dist/lumos-custom-conditions-for-pf1e.css"
-    }
+    "dist/lumos-custom-conditions-for-pf1e.css"
   ],
-   "templates": [
-       "templates/custom-condition-chat-card.hbs"
-   ],
   "flags": {
     "hotReload": {
       "extensions": [

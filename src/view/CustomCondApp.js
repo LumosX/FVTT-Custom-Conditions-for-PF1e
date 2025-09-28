@@ -46,7 +46,7 @@ export class CustomCondApp extends SvelteApp
             "flex": "0 0 var(--button-size)",
             "background": "var(--button-background-color)",
             "border": "none"
-         }
+         },
       });
       return buttons;
    }
