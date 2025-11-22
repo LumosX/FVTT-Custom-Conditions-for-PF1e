@@ -7,8 +7,6 @@ export async function InitCustomCondManager(socketInstance) {
     // Perform pre-init
     preInit_CleanExistingHooks();
 
-    await foundry.applications.handlebars.loadTemplates(["modules/lumos-custom-conditions-for-pf1e/templates/custom-condition-chat-card.hbs"]);
-
     Hooks.on("renderChatMessageHTML", (...args) => onRenderCustomCondChatMessage_AddOnClickTokenPanning(...args));
     Hooks.on("pf1ToggleActorBuff", (...args) => onToggleActorBuff_DeleteEmbeddedItemWhenCustomCondDisabled(...args));
 
@@ -339,15 +337,34 @@ async function renderChatMessage(userId, condName, condIcon, isStatus, eventWasC
         tokenStateMap[state][1].push(token);
     });
 
-    const chatMessageContent = await foundry.applications.handlebars
-        .renderTemplate("modules/lumos-custom-conditions-for-pf1e/templates/custom-condition-chat-card.hbs", {
-            condName,
-            condIcon,
-            isStatus,
-            sections: Object.values(tokenStateMap)
-                .map(([stateSectionText, tokens]) => ({ stateSectionText, tokens }))
-                .filter(section => section.tokens.length > 0)
-        });
+    const getHtmlForToken = token => `
+        <div style="display: inline-flex; align-items: center; margin-right: 5px">
+            <img src="${token.document.texture.src}" width="36" height="36" style="border: none; margin-right: 5px;">
+            <a class="focus-token content-link" data-token-id="${token.id}">${token.name}</a>
+        </div>
+    `;
+
+    const sectionHtml = Object.values(tokenStateMap)
+        .map(([stateSectionText, tokens]) => tokens.length
+            ? `<div class="card-content">
+                    <h3 style="font-weight: normal; margin: 0 0 0.5rem; border-bottom: 1px solid var(--color-whisper-border); font-size: var(--font-size-14)">
+                        ${stateSectionText}
+                    </h3>
+                    ${tokens.map(getHtmlForToken).join(" ")}
+                </div>`
+            : "")
+        .join("");
+
+    const chatMessageContent = `
+        <div class="pf1 chat-card">
+            <header class="card-header type-color flexrow">
+                <img src="${condIcon}" title="${condName}" width="36" height="36" style="border: 0;${isStatus
+            ? `${condName === "Battered" ? "mix-blend-mode: multiply;" : ""}filter: invert(1)` : ""}">
+                <h3 class="item-name">${condName}</h3>
+            </header>
+            ${sectionHtml}
+        </div>
+    `;
 
     const targetUser = game.users.get(userId);
     const userControlledToken = targetUser.character?.getActiveTokens()[0] ||
